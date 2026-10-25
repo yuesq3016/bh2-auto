@@ -6,6 +6,7 @@
     python -m simauto.fullrun [--dry-run] [--only 收菜 共鸣屋 ...]
 """
 from __future__ import annotations
+from ._root import project_root
 
 import argparse
 import random
@@ -15,10 +16,11 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
+
 from .adb_backend import AdbBackend
 from .ocr import OcrEngine
 
-PROJECT = Path(__file__).resolve().parent.parent
+PROJECT = Path(project_root())
 # ⚠️ 这里**必须和 GUI 的任务列表保持一致**(顺序 + 键名)。
 # 之前两边各写一份,导致 GUI 加了前置导航、fullrun 却漏了 ——
 # 实测 fullrun 跑收菜时在别的页面上找「探索完成」,报 "looks clean / 0 claim(s)"。

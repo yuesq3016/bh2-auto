@@ -12,16 +12,18 @@
 (有一次因此只消耗了 50 体力而不是 100)。
 """
 from __future__ import annotations
+from ._root import project_root
 
 import random
 import time
 from pathlib import Path
 
+
 from .ocr import OcrEngine
 from .sweep import (_click, _dismiss, _find, _find_button, _find_safe, _fight,
                     _is_support_list, _select_support, _texts)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(project_root())
 
 # 实测坐标
 BONUS_LABEL_BELOW = 57          # BONUS 文字下方这么多像素处是可点的节点

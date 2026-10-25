@@ -22,6 +22,7 @@ windows where GDI returns black.  ``backend: auto`` prefers MaaFramework.
 """
 
 from __future__ import annotations
+from ._root import project_root
 
 import os
 import sys
@@ -37,7 +38,7 @@ def _enable_vendor_dir() -> str | None:
     to its own site-packages.  Adding the directory here means the optional
     MaaFramework backend works with no installation step at all.
     """
-    vendor = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vendor")
+    vendor = os.path.join(project_root(), "vendor")
     if os.path.isdir(vendor) and vendor not in sys.path:
         sys.path.append(vendor)
         return vendor

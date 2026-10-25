@@ -27,3 +27,6 @@ desktop.ini
 
 # 构建产物
 dist/
+
+# PyInstaller 中间产物
+build/

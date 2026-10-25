@@ -19,7 +19,7 @@ echo.
 if errorlevel 1 goto mirror
 
 echo.
-echo [OK] Dependencies installed. Now double-click launch-gui.cmd
+echo [OK] Dependencies installed. Now double-click 启动.cmd
 pause
 exit /b 0
 
@@ -29,7 +29,7 @@ echo Default index failed, retrying with the Tsinghua mirror...
 "%PY%" -m pip install -r "%PROJ%\requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple
 if errorlevel 1 goto failed
 echo.
-echo [OK] Dependencies installed. Now double-click launch-gui.cmd
+echo [OK] Dependencies installed. Now double-click 启动.cmd
 pause
 exit /b 0
 

@@ -13,6 +13,7 @@ y = 245 / 399 / 551 and the price/owned row sits ~85px below, so a slot is
 """
 
 from __future__ import annotations
+from ._root import project_root
 
 import os
 import time
@@ -39,7 +40,7 @@ def watchlist_path(path: str | None = None) -> str:
     """Absolute path of the watchlist text file."""
     if path:
         return path if os.path.isabs(path) else os.path.abspath(path)
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    root = project_root()
     return os.path.join(root, WATCHLIST_FILENAME)
 
 
@@ -54,7 +55,7 @@ def load_equipment_settings(path: str | None = None) -> dict:
     if path:
         resolved = path if os.path.isabs(path) else os.path.abspath(path)
     else:
-        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        root = project_root()
         resolved = os.path.join(root, "equipment.json")
     if not os.path.exists(resolved):
         return {}

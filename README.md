@@ -1,6 +1,6 @@
 <div align="center">
 
-# simauto
+# Simauto · 崩坏学园2 自动化脚本
 
 **崩坏学园2 自动化脚本 · Python 版**
 
@@ -11,11 +11,18 @@ Windows + 安卓模拟器，不需要 ADB，不需要 root，不需要注入。
 
 ## 如何使用
 
-1. 装 Python 3.10+，只需 `numpy`；想要更强的截图后端再装 `maafw`。
-2. **模板自己抠**。仓库不含任何游戏截图，用 `python -m simauto crop` 从你的截图里切。
+### 直接下载
+
+到 [Releases](https://github.com/yuesq3016/simauto/releases) 下载压缩包，解压后**双击 `Simauto.exe`**，不需要装 Python。
+第一次用先跑 `Simauto.exe doctor` 和 `Simauto.exe find`，确认能抓到模拟器画面。
+
+### 从源码跑
+
+1. 装 Python 3.11/3.12，执行 `pip install -r requirements.txt`（只有 numpy；想要更强截图后端再 `pip install maafw`）。
+2. **模板自己抠**。仓库不含游戏截图，用 `python -m simauto crop` 从你的截图里切。
 3. 校准识别：`python -m simauto match --calibrate`，把建议阈值填回配置。
 4. 先干跑：`python -m simauto run --config configs/bh2-enter.json --dry-run`。
-5. 确认没问题再真跑，或者双击 `launch-gui.cmd` 用界面。
+5. 没问题再真跑，或者双击 `启动.cmd` 用界面。
 
 详细说明（后端对比、踩坑记录、协议解析）在 [docs/DETAILS.md](docs/DETAILS.md)。
 

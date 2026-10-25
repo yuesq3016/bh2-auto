@@ -57,7 +57,7 @@ honkai2-bot/
 ├─ equipment.json           # 装备切换坐标与目标套装
 ├─ watchlist.txt            # 共鸣屋购买名单
 ├─ social-rules.json        # 社交页禁用点击规则
-├─ launch-gui.cmd           # 启动器（自动查找 Python）
+├─ 启动.cmd           # 启动器（自动查找 Python）
 ├─ README.md / NOTES.md     # 使用说明 / 开发笔记
 └─ releases/                # 发布包（v1.0.0-20261023 目录 + 同名 zip）
 ```
@@ -384,7 +384,7 @@ python tests\test_simauto.py          # 应输出 all 64 checks passed
 python -m simauto.fullrun --only 商店 --log sessions\run-shop.log
 
 # 启动前端
-.\launch-gui.cmd
+.\启动.cmd
 ```
 
 ---
@@ -431,12 +431,12 @@ MaaFramework ProjectInterface 变体，11 个 pipeline JSON / 81 个节点。
    & "D:\MuMuPlayer\nx_device\12.0\shell\adb.exe" connect 127.0.0.1:16384
    & "D:\MuMuPlayer\nx_device\12.0\shell\adb.exe" devices
    ```
-4. 启动前端：`.\launch-gui.cmd`（或双击桌面快捷方式）
+4. 启动前端：`.\启动.cmd`（或双击桌面快捷方式）
 5. 在「设置」页确认：设备地址 `127.0.0.1:16384`、装备组/套装
 6. 建议第一次先**只勾 ①启动游戏**，确认广告能关掉，再全选
 
 ### 桌面快捷方式
-`C:\Users\14520\Desktop\崩坏学园2 自动化.lnk` → 指向 `E:\DSH-Workspace\honkai2-bot\launch-gui.cmd`
+`C:\Users\14520\Desktop\崩坏学园2 自动化.lnk` → 指向 `E:\DSH-Workspace\honkai2-bot\启动.cmd`
 （交接时已同步更新「目标 / 起始位置 / 图标」；之后再移动项目，需右键 → 属性 → 同步改这三项。）
 
 ---
@@ -458,7 +458,7 @@ MaaFramework ProjectInterface 变体，11 个 pipeline JSON / 81 个节点。
 | 单元测试 | `all 64 checks passed` |
 | 启动冒烟 | 从新目录启动 GUI 正常（窗口正常出现，测试后已关闭） |
 | 发布包 | `releases\v1.0.0-20261023\` 62 个文件；同名 zip 校验通过（可完整解压） |
-| 启动器 | `launch-gui.cmd` 改为自动查找 Python（PATH → 常见安装位置） |
+| 启动器 | `启动.cmd` 改为自动查找 Python（PATH → 常见安装位置） |
 | 文档路径 | `README.md` / `NOTES.md` 里的旧绝对路径已替换 |
 | 桌面快捷方式 | 已指向新路径（目标 / 起始位置 / 图标） |
 | 原路径 | `C:\Users\14520\Documents\deepseek-harness\default-workspace\honkai2-bot` 已清空并删除（其中仅剩 `.maa\debug\maafw.log` 日志，一并清除） |

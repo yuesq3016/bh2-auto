@@ -23,6 +23,7 @@ with its box and score, which is what a task engine actually needs.
 """
 
 from __future__ import annotations
+from ._root import project_root
 
 import os
 import threading
@@ -72,7 +73,7 @@ def default_model_dir() -> str | None:
     """First existing OCR model directory."""
     for hint in _MODEL_DIR_HINTS:
         path = hint if os.path.isabs(hint) else os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), hint)
+            project_root(), hint)
         if _looks_like_model_dir(path):
             return path
         child = os.path.join(path, "ocr")

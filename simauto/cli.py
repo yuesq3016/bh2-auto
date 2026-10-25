@@ -13,6 +13,7 @@ Every subcommand exists to answer one question during calibration:
 """
 
 from __future__ import annotations
+from ._root import project_root
 
 import argparse
 import json
@@ -524,7 +525,7 @@ def cmd_preview(args) -> int:
     readable at a glance) and an HTML gallery with the real pixel sizes, which
     is what makes a wrong crop obvious.
     """
-    tdir = args.dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    tdir = args.dir or os.path.join(project_root(),
                                     "templates")
     if not os.path.isdir(tdir):
         _fail(f"no template directory: {tdir}")

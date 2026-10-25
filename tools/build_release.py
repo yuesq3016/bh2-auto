@@ -31,8 +31,11 @@ def tracked_files() -> list[str]:
 
 
 def extra_files() -> list[str]:
-    """Files kept out of git (game screenshots, model weights) but shipped in the zip."""
+    """Files kept out of git (game screenshots, model weights, built exe) but shipped in the zip."""
     extras: list[str] = []
+    exe = os.path.join(ROOT, "dist", "exe", "Simauto.exe")
+    if os.path.isfile(exe):
+        extras.append("Simauto.exe")
     tpl = os.path.join(ROOT, "templates")
     if os.path.isdir(tpl):
         for name in sorted(os.listdir(tpl)):
@@ -60,6 +63,8 @@ def main() -> int:
     skipped: list[str] = []
     for rel in files:
         src = os.path.join(ROOT, rel)
+        if rel == "Simauto.exe":
+            src = os.path.join(ROOT, "dist", "exe", "Simauto.exe")
         if not os.path.isfile(src):
             skipped.append(rel)
             continue

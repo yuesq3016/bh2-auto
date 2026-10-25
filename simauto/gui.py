@@ -29,14 +29,16 @@
 """
 
 from __future__ import annotations
+from ._root import project_root
 
 import queue
 import threading
 import tkinter as tk
 from pathlib import Path
+
 from tkinter import messagebox, ttk
 
-PROJECT = Path(__file__).resolve().parent.parent
+PROJECT = Path(project_root())
 CONFIG_PATH = PROJECT / "configs" / "bh2-summon.json"
 WATCHLIST = PROJECT / "watchlist.txt"
 EQUIPMENT = PROJECT / "equipment.json"
