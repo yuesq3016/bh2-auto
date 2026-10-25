@@ -1,0 +1,32 @@
+simauto — Third-party notices
+================================
+
+本项目改编自下列上游作品。MIT 许可证要求保留其版权声明与许可声明。
+
+1. MAAHG2
+   仓库: https://github.com/Choi-Peng/MAAHG2
+   作者: Choi-Peng
+   版权: Copyright (c) 2024 MaaXYZ
+   许可: MIT License
+   用途: 崩坏学园2 的流程结构、任务集设计与界面理解的底子；
+         本项目在其基础上重写为 Python 实现。
+
+2. MaaFramework
+   仓库: https://github.com/MaaXYZ/MaaFramework
+   版权: MaaXYZ
+   许可: LGPL-3.0
+   用途: 可选依赖，通过官方 Python 绑定 maafw 调用 Win32 控制器与截图 API。
+         以库方式调用；分发打包程序时需自行履行 LGPL 义务。
+
+3. MaaAssistantArknights (MAA)
+   仓库: https://github.com/MaaAssistantArknights/MaaAssistantArknights
+   许可: AGPL-3.0-only
+   用途: 仅借鉴设计（任务即数据、720p 基准、轮询兜底），未复制其代码或资源。
+
+4. MaaCommonAssets
+   仓库: https://github.com/MaaXYZ/MaaCommonAssets
+   用途: OCR 模型文件（det.onnx / rec.onnx）。该文件不在本仓库内分发，
+         由使用者自行获取。
+
+游戏名称、界面与美术资源版权归权利人（米哈游 /《崩坏学园2》）所有。
+本项目与官方无关，不附带任何游戏素材。
