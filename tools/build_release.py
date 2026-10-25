@@ -16,6 +16,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def tracked_files() -> list[str]:
+    """Tracked paths.
+
+    Under a restricted sandbox Python cannot create pipes for subprocess, so the
+    caller may pre-generate the list with `git ls-files > list.txt` and point
+    RELEASE_FILELIST at it.
+    """
+    preset = os.environ.get("RELEASE_FILELIST")
+    if preset:
+        with open(preset, encoding="utf-8") as fh:
+            return [line.strip() for line in fh if line.strip()]
     out = subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True)
     return [p for p in out.splitlines() if p.strip()]
 
@@ -45,7 +55,8 @@ def main() -> int:
         shutil.rmtree(stage)
     os.makedirs(stage, exist_ok=True)
 
-    files = tracked_files() + extra_files()
+    tracked = set(tracked_files())
+    files = sorted(tracked) + [p for p in extra_files() if p not in tracked]
     skipped: list[str] = []
     for rel in files:
         src = os.path.join(ROOT, rel)

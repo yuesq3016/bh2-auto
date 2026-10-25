@@ -24,3 +24,6 @@ vendor/ocr-model/*.onnx
 .idea/
 Thumbs.db
 desktop.ini
+
+# 构建产物
+dist/
