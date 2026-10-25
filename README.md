@@ -13,7 +13,7 @@ Windows + 安卓模拟器，不需要 ADB，不需要 root，不需要注入。
 
 ### 直接下载
 
-到 [Releases](https://github.com/yuesq3016/simauto/releases) 下载压缩包，解压后**双击 `Simauto.exe`**，不需要装 Python。
+到 [Releases](https://github.com/yuesq3016/honkai2-auto/releases) 下载压缩包，解压后**双击 `Simauto.exe`**，不需要装 Python。
 第一次用先跑 `Simauto.exe doctor` 和 `Simauto.exe find`，确认能抓到模拟器画面。
 
 ### 从源码跑
