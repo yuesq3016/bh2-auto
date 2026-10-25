@@ -1,0 +1,54 @@
+simauto 使用说明（Windows）
+================================
+
+本项目跑在 Windows + 安卓模拟器上（实测 MuMu 模拟器 12，1280x720）。
+
+一、准备 Python
+--------------
+
+装 Python 3.11 或 3.12：https://www.python.org/downloads/
+安装时勾选 "Add python.exe to PATH"。
+
+二、装依赖
+----------
+
+双击 install-deps.cmd。
+它会自动找 Python 并执行 pip install -r requirements.txt（只需 numpy）。
+如果你想要更强的后台截图，可以再执行：
+    pip install maafw
+
+三、启动
+--------
+
+双击 launch-gui.cmd 打开图形界面。
+命令行也可以：python -m simauto gui
+
+第一次用先跑一遍环境检查：
+    python -m simauto doctor    找模拟器、检查环境
+    python -m simauto find      自动定位窗口并试所有截图后端
+    python -m simauto grab      存一张截图，确认能抓到画面
+
+四、模板（必须自己准备）
+----------------------
+
+仓库和安装包里带的 templates/ 只是示例，准确做法是：
+1. python -m simauto grab 存一张你的截图
+2. python -m simauto crop 把按钮/图标抠成模板图
+3. python -m simauto match --calibrate 得到建议阈值
+4. 把阈值填回 configs/*.json 的 threshold
+
+配置是 JSONC，允许 // 注释。
+
+五、先干跑再真跑
+----------------
+
+    python -m simauto validate -c configs/bh2-enter.json     校验配置和模板
+    python -m simauto run -c configs/bh2-enter.json --dry-run
+    python -m simauto run -c configs/bh2-enter.json
+
+六、注意
+--------
+
+- 自动化操作可能违反游戏用户协议并导致封号，风险自负，仅供学习与自用。
+- 本项目与米哈游 /《崩坏学园2》官方无关。
+- 详细技术说明见 docs/DETAILS.md。
