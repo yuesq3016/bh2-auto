@@ -1,0 +1,8 @@
+
+        {
+          // JSONC comments must be tolerated
+          "window": { "title": "x" },
+          "recognizers": { "r": { "method": "template", "template": "nope.png" } },
+          "tasks": { "t": { "triggers": [{ "recognizer": "r" }], "actions": [{ "action": "click" }] } }
+        }
+        

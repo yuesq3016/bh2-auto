@@ -1,0 +1,99 @@
+// 崩坏学园2 · 收菜(领取所有探索完成的使魔探险奖励)
+//
+// 你的要求:"先领取所有探索完成的(收菜)之后再派出"
+//   - 不一定只有两个,要运行到没有「探索完成」
+//   - 列表会自动滚动,不需要主动滚动
+//
+// 实测得到的界面规律(关键,决定了实现方式):
+//   1. 每个已完成的条目都显示「点击领取奖励」
+//   2. 「探索完成」印章才是"还有东西可领"的判据
+//   3. 点开奖励窗后,窗口是**半透明**的 —— 后面的「点击领取奖励」仍然能被 OCR 读到,
+//      所以不能拿它当循环条件,否则会在弹窗状态下无限重复点击
+//   4. 领完一个,列表自动上滚,下一个可领条目移到同样的位置
+//
+// 决策顺序(每轮重新 OCR):
+//   弹窗在  -> 关掉它
+//   有可领  -> 点最上面那个(会自动弹出奖励窗)
+//   都没有  -> 检查是否还有「探索完成」残留:有则报错停下(说明点击没生效)
+//   干净了  -> 结束
+//
+// 用法:
+//   python -m simauto validate --config configs\bh2-recycle.json
+//   python -m simauto run --config configs\bh2-recycle.json --dry-run
+//   python -m simauto run --config configs\bh2-recycle.json
+
+{
+  "name": "崩坏学园2 · 收菜(使魔探险领奖)",
+  "mode": "once",
+
+  "reference_resolution": [1280, 720],
+  "window": {},
+
+  "capture": {
+    "backend": "adb",
+    "address": "127.0.0.1:16384",
+    "adb_input": "maatouch",
+    "rotation": 0
+  },
+
+  "defaults": { "check_every": 0.05, "click_jitter": 4 },
+
+  // OCR 识别器(文字,不怕换皮换背景)
+  "recognizers": {
+    // 确认已经在使魔探险界面
+    "summonTab": {
+      "method": "ocr",
+      "text": ["使魔探险"],
+      "roi": [0, 400, 130, 80],
+      "threshold": 0.5
+    },
+    // 还有多少可领(用于汇报)
+    "claimLabel": {
+      "method": "ocr",
+      "text": ["点击领取奖励"],
+      "roi": [210, 190, 1060, 530],
+      "threshold": 0.75
+    },
+    // 已完成印章(真正的"还没收完"判据)
+    "doneStamp": {
+      "method": "ocr",
+      "text": ["探索完成"],
+      "roi": [210, 190, 1060, 530],
+      "threshold": 0.75
+    },
+    // 当前的已接取探险数(用于汇报:领奖会不会改变它)
+    "travelCount": {
+      "method": "ocr",
+      "text": ["已接取的探险数"],
+      "roi": [200, 120, 400, 60],
+      "threshold": 0.5
+    }
+  },
+
+  "steps": [
+    { "action": "log", "message": "=== 收菜:领取所有探索完成的奖励 ===" },
+    { "action": "screenshot", "tag": "beforeRecycle" },
+
+    // 收菜主循环
+    {
+      "action": "click_text_until_gone",
+      "text": "点击领取奖励",
+      "stop_when": "探索完成",
+      "popup_text": "获得奖励",
+      "dismiss": [300, 650],
+      "roi": [210, 190, 1060, 530],
+      "confidence": 0.75,
+      "settle": 1.5,
+      "max_rounds": 14,
+      "confirm_clean": 3
+    },
+
+    { "action": "wait", "seconds": 1.0 },
+    { "action": "screenshot", "tag": "afterRecycle" },
+    { "action": "log", "message": "=== 收菜完成 ===" }
+  ],
+
+  "session_dir": "sessions",
+  "max_seconds": 300
+}
+

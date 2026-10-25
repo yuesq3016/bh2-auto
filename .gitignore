@@ -1,0 +1,22 @@
+# 运行时产物（本地跑出来的，不进仓库）
+debug.log
+.maa/
+sessions/
+releases/
+configs/sessions/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OCR 模型权重（15MB，按 README 自行下载）
+vendor/ocr-model/*.onnx
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

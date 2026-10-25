@@ -1,0 +1,241 @@
+// 崩坏学园2 · 阶段一:标题界面 -> 进入游戏
+//
+// 你的流程第 1 步:
+//   "进入游戏后如果有签到要确认,没有跳过"
+//
+// 已抠好的模板(都来自你的真实截图,自匹配 score=1.0000):
+//   templates/account_switch.png  标题界面的「账号切换」——稳定锚点,立绘会变它不变
+//   templates/signin_claim.png    主界面「每日签到」弹窗的「领取」按钮
+//
+// 关键设计:用 click_verified 而不是 click
+//   点完必须满足以下任一条件,否则报错并存现场图:
+//     (a) account_switch 消失  -> 确实离开标题界面了
+//     (b) signin_claim 出现    -> 签到弹窗出现了
+//   这样"点了但没反应"会立刻暴露,而不是无声地空转。
+//
+// 用法:
+//   python -m simauto validate --config configs\bh2-enter.json
+//   python -m simauto run --config configs\bh2-enter.json --dry-run --debug
+
+{
+  "name": "崩坏学园2 · 阶段一 进入游戏",
+  "mode": "events",
+
+  "reference_resolution": [1280, 720],
+  "window": {},
+
+  "capture": {
+    "backend": "adb",
+    "address": "127.0.0.1:16384",
+    "adb_input": "maatouch",
+    "rotation": 0
+  },
+
+  "defaults": {
+    "check_every": 0.05,
+    "click_jitter": 8,
+    "max_consecutive_misses": 60
+  },
+
+  "recognizers": {
+    // 标题界面锚点。只在登录/标题界面出现。
+    "titleScreen": {
+      "method": "template",
+      "template": "../templates/account_switch.png",
+      "roi": [1000, 0, 260, 90],
+      "threshold": 0.90
+    },
+
+    // 进游戏后弹的限时礼包广告(实测会挡住签到弹窗)。
+    // 右上角 X 按钮:模板 56x56,自匹配 1.0000,runner_up 0.625。
+    // ⚠️ 新活动(2026-10-18)的登录广告「超绝心愿/梦想祈愿」X 只匹配到 0.849,
+    // 而真正主界面误匹配仅 0.429 —— 所以阈值降到 0.80,既识别新广告又不误伤。
+    "promoPopup": {
+      "method": "template",
+      "template": "../templates/popup_close_x.png",
+      "roi": [950, 120, 180, 140],
+      "threshold": 0.80
+    },
+
+    // 每日签到弹窗(每次登录必弹)。
+    //
+    // 改用 **OCR** 而不是模板:模板 signin_claim.png 是对着旧版弹窗抠的,实测
+    // 新版(带「第6天 / 第7天」格子 + 大号「领取」按钮)匹配不上,于是签到被
+    // 整个跳过 —— 这是实际发生过的漏领。
+    //
+    // 判据用「第N天」这种弹窗独有文字,而不是「领取」:后者在主界面别处也可能
+    // 出现,容易误触发。target 必须指向「领取」,**按钮才可点**。
+    "signinDialog": {
+      "method": "ocr",
+      "text": ["每日签到", "第6天", "第7天", "第5天", "第4天", "第3天",
+               "签到领取奖励"],
+      "roi": [700, 230, 580, 350],
+      "threshold": 0.5
+    },
+    // 签到弹窗里的「领取」按钮(可点目标)。精确匹配,避免命中正文。
+    "signinClaimButton": {
+      "method": "ocr",
+      "text": ["领取"],
+      "roi": [790, 500, 300, 130],
+      "threshold": 0.8
+    },
+    // 兜底:不限区域的「领取」。有些弹窗布局里按钮不在上面那个 ROI 内。
+    "signinClaimFallback": {
+      "method": "ocr",
+      "text": ["领取"],
+      "roi": [700, 400, 580, 280],
+      "threshold": 0.8
+    },
+
+    // 公告面板(关闭广告后会出现,同样挡着主界面)。
+    // 实测:它的 X 与广告的 X 是两个不同模板(交叉匹配仅 0.397),所以必须分开抠。
+    "announcement": {
+      "method": "template",
+      "template": "../templates/announce_close_x.png",
+      "roi": [1100, 20, 180, 120],
+      "threshold": 0.85
+    },
+
+    // 主界面导航(用来确认"已经在主界面、弹窗都清干净了")。
+    // 注意:主界面背景会变(登录时是图案,进入后换成角色立绘),实测旧模板在
+    // 新背景上只到 0.67。这里用"首页"按钮,并且每次背景大改后要重抠一次。
+    "mainMenu": {
+      "method": "template",
+      "template": "../templates/nav_home.png",
+      "roi": [580, 0, 160, 120],
+      // 实测同一界面连续 3 次运行的分数是 0.92 / 0.98 / 0.98 —— 背景在变会拉低它,
+      // 0.90 的余量只有 0.02 偏危险。ROI 外 runner-up = -1(零误配),
+      // 所以降到 0.85 是安全的。
+      "threshold": 0.85
+    }
+  },
+
+  "tasks": {
+    // 任务一:标题界面 -> 点画面进入游戏
+    "enterGame": {
+      "triggers": [
+        { "recognizer": "titleScreen", "cooldown": 8.0 }
+      ],
+      "actions": [
+        { "action": "log", "message": "检测到标题界面 -> 点击画面进入游戏" },
+        {
+          "action": "click_verified",
+          // 点画面中偏下的空白处:避开右上「账号切换」、右下电源键、左下版本号
+          "point": [640, 430],
+          "jitter": 30,
+          // 点完必须证明界面确实变了(二者任一)
+          "expect": "promoPopup",
+          "expect_gone": "titleScreen",
+          "settle": 2.0,
+          "timeout": 25.0,
+          "interval": 0.6,
+          // 最多点 2 次,不行就报错停下(而不是无限点)
+          "retries": 2
+        }
+      ]
+    },
+
+    // 任务二:关掉限时礼包广告(它会挡住签到弹窗)
+    "closePromo": {
+      "triggers": [
+        { "recognizer": "promoPopup", "cooldown": 6.0 }
+      ],
+      "actions": [
+        { "action": "log", "message": "检测到限时礼包广告 -> 关闭" },
+        {
+          "action": "click_verified",
+          "target": "promoPopup",
+          "jitter": 4,
+          "expect_gone": "promoPopup",
+          "settle": 1.5,
+          "timeout": 10.0,
+          "interval": 0.5,
+          "retries": 2
+        },
+        { "action": "wait", "seconds": 1.0 }
+      ]
+    },
+
+    // 任务三:公告面板 -> 关闭
+    // 这类弹窗是"一个接一个"的(关掉广告冒出公告),所以每个都要有对应任务。
+    "closeAnnouncement": {
+      "triggers": [
+        { "recognizer": "announcement", "cooldown": 6.0 }
+      ],
+      "actions": [
+        { "action": "log", "message": "检测到公告面板 -> 关闭" },
+        {
+          "action": "click_verified",
+          "target": "announcement",
+          "jitter": 4,
+          "expect_gone": "announcement",
+          "settle": 1.5,
+          "timeout": 10.0,
+          "interval": 0.5,
+          "retries": 2
+        },
+        { "action": "wait", "seconds": 1.0 }
+      ]
+    },
+
+    // 任务四:签到弹窗 -> 领取
+    // 分两步点:先按「signinClaimButton」(限定了下半区的「领取」),再按
+    // 「signinClaimFallback」(不限区域的「领取」)。原因:实测弹窗布局有变化,
+    // 有时「领取」不在下半区;只点一次容易漏。两步都用 expect_gone 验证。
+    "claimSignin": {
+      "triggers": [
+        { "recognizer": "signinDialog", "cooldown": 8.0 }
+      ],
+      "actions": [
+        { "action": "log", "message": "检测到每日签到 -> 领取" },
+        { "action": "screenshot", "tag": "signinSeen" },
+        {
+          "action": "click_verified",
+          "target": "signinClaimButton",
+          "jitter": 5,
+          "expect_gone": "signinDialog",
+          "settle": 1.5,
+          "timeout": 10.0,
+          "interval": 0.5,
+          "retries": 2
+        },
+        {
+          "action": "click_verified",
+          "target": "signinClaimFallback",
+          "jitter": 5,
+          "expect_gone": "signinDialog",
+          "settle": 1.5,
+          "timeout": 10.0,
+          "interval": 0.5,
+          "retries": 2
+        },
+        { "action": "wait", "seconds": 1.0 }
+      ]
+    },
+
+    // 任务五:确认已到主界面(阶段一的终点)。只记录,不动手。
+    // absent 必须列出**所有**已知弹窗:导航栏在弹窗后面也部分可见,
+    // 不排除干净的话"关掉一个弹窗"就会被误判成"已经到主界面了"。
+    "reachedMain": {
+      "triggers": [
+        {
+          "recognizer": "mainMenu",
+          "absent": ["promoPopup", "announcement", "signinDialog"],
+          "cooldown": 0.0
+        }
+      ],
+      "actions": [
+        { "action": "screenshot", "tag": "mainMenuReached" },
+        { "action": "log", "message": "== 阶段一完成:已进入主界面(无弹窗) ==" },
+        { "action": "stop", "reason": "stage one done: main menu reached" }
+      ]
+    }
+  },
+
+  // 顺序:先关挡路的弹窗,再领签到,进入游戏,最后确认主界面
+  "priority": ["closePromo", "closeAnnouncement", "claimSignin", "enterGame", "reachedMain"],
+
+  "loop": { "idle_sleep": 0.05 },
+  "session_dir": "sessions",
+  "max_seconds": 300
+}

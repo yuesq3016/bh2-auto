@@ -1,0 +1,112 @@
+// 崩坏学园2 · 每日任务 → 使魔探险:收菜 + 再次派出
+//
+// 你的流程:
+//   "进入每日任务里先进行使魔派遣任务的回收和再次派出"
+//   "不一定只有两个,要运行到没有「探索完成」"
+//   "领取后任务会自动滚动,不需要你滚动"
+//
+// 实测确认的界面规律(全部来自真机):
+//   1. 已完成的条目显示「探索完成」印章 +「点击领取奖励」
+//   2. 点开奖励窗后,窗口是**半透明**的 —— 后面的文字仍能被 OCR 读到,
+//      所以不能用「点击领取奖励」当循环条件(会重复点击)
+//   3. 领取后列表自动上滚,下一个可领条目移到同一位置
+//   4. 待派遣的槽位显示「点击选择使魔」
+//   5. 点进去后点「一键派遣」填好队伍,再点「出发」
+//      (曾用"成功率 100%"做验证闸,按用户要求已移除:一键派遣后直接出发)
+//   6. 派出后该条目变成「剩余时间 HH:MM:SS」
+//   7. 日志实测:收菜 4 次(计数 6/10 -> 3/10),派遣 2 次
+//
+// 用法:
+//   python -m simauto validate --config configs\bh2-summon.json
+//   python -m simauto run --config configs\bh2-summon.json --dry-run
+//   python -m simauto run --config configs\bh2-summon.json
+
+{
+  "name": "崩坏学园2 · 使魔探险 收菜+派出",
+  "mode": "once",
+
+  "reference_resolution": [1280, 720],
+  "window": {},
+
+  "capture": {
+    "backend": "adb",
+    "address": "127.0.0.1:16384",
+    "adb_input": "maatouch",
+    "rotation": 0
+  },
+
+  "defaults": { "check_every": 0.05, "click_jitter": 4 },
+
+  "recognizers": {
+    // 界面锚点:确认在使魔探险页(文字识别,不怕换皮换背景)
+    "summonTab": {
+      "method": "ocr",
+      "text": ["使魔探险"],
+      "roi": [0, 400, 130, 80],
+      "threshold": 0.5
+    },
+    // 收菜判据
+    "doneStamp": {
+      "method": "ocr",
+      "text": ["探索完成"],
+      "roi": [210, 190, 1060, 530],
+      "threshold": 0.75
+    },
+    // 派遣入口
+    "chooseServant": {
+      "method": "ocr",
+      "text": ["点击选择使魔"],
+      "roi": [900, 250, 380, 360],
+      "threshold": 0.75
+    },
+    // 奖励弹窗(半透明,不遮挡后面的文字)
+    "rewardPopup": {
+      "method": "ocr",
+      "text": ["获得奖励"],
+      "roi": [420, 160, 500, 150],
+      "threshold": 0.6
+    }
+  },
+
+  "steps": [
+    { "action": "screenshot", "tag": "01_before" },
+
+    // ---------- 第一步:收菜 ----------
+    { "action": "log", "message": "=== 收菜:领取所有「探索完成」的奖励 ===" },
+    {
+      "action": "click_text_until_gone",
+      "text": "点击领取奖励",
+      "stop_when": "探索完成",
+      "popup_text": "获得奖励",
+      "dismiss": [300, 650],
+      "roi": [210, 190, 1060, 530],
+      "confidence": 0.75,
+      "settle": 1.5,
+      // 必须连续 3 次确认干净 —— 游戏重绘时的空帧会让单次检查误判为"已完成"
+      "confirm_clean": 3,
+      "max_rounds": 16
+    },
+    { "action": "screenshot", "tag": "02_afterRecycle" },
+
+    // ---------- 第二步:再次派出 ----------
+    { "action": "log", "message": "=== 派出:处理所有待派遣槽位 ===" },
+    {
+      "action": "dispatch_expeditions",
+      "text": "点击选择使魔",
+      // OCR 偶尔漏字(实测把「一键派遣」读成「键派遣」),所以给多个候选
+      "quick_text": ["一键派遣", "键派遣", "派遣"],
+      "depart_text": "出发",
+      // 不做成功率验证:一键派遣后直接出发(按你的要求)
+      "roi": [210, 190, 1060, 530],
+      "confidence": 0.75,
+      "settle": 2.0,
+      "max_rounds": 10
+    },
+    { "action": "screenshot", "tag": "03_afterDispatch" },
+
+    { "action": "log", "message": "=== 使魔探险处理完成 ===" }
+  ],
+
+  "session_dir": "sessions",
+  "max_seconds": 600
+}

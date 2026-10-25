@@ -1,0 +1,157 @@
+// 崩坏学园2 · 入门配置(骨架,必须校准后才能用)
+//
+// 这个文件的作用是"把流程跑起来",不是"开箱即用":
+//   1. 所有 templates/*.png 都还不存在,先用 `crop` 从你自己的截图里抠出来
+//   2. 所有 roi 都是 1280x720 基准下的**占位猜测**,必须按你的实际界面改
+//   3. 所有 threshold 都要用 `match --calibrate` 的实测建议值替换
+//
+// 先干跑,确认识别对了再让它点:
+//   python -m simauto validate --config configs/bh2-starter.json
+//   python -m simauto run --config configs/bh2-starter.json --debug --dry-run
+//
+// 本文件是 JSONC(允许 // 注释),simauto 会剥掉行首注释再解析。
+
+{
+  "name": "崩坏学园2 · 入门",
+  "mode": "events",
+
+  // 坐标基准。模拟器窗口改成别的比例时,ROI 会自动跟着缩放。
+  "reference_resolution": [1280, 720],
+
+  // 窗口:先 `python -m simauto list` 看标题,把下面的值改成你的。
+  // MuMu 12 的画面窗口标题通常是 MuMuNxDevice;雷电是 subWin;蓝叠是 BlueStacksApp。
+  "window": { "title": "MuMuNxDevice" },
+
+  "capture": {
+    // 三选一,实测数据见 README:
+    //   "maafw" / "gdi"  -> 33 ms/帧,快,但窗口必须保持可见不被遮挡
+    //   "adb"            -> 500 ms/帧(约 2 fps),但窗口遮住/最小化都能跑
+    // "auto" = 有 maafw 用 maafw,否则自带 GDI。
+    "backend": "maafw",
+    // maafw 的截图方式(按位或);本机实测只有 screendc 可用
+    "screencap": "screendc",
+    // 自带 GDI 回退时用哪种
+    "method": "auto",
+    // ---- 只有 backend = "adb" 时才用到的字段 ----
+    // 注意:adb 的截图方式写在这里,不要写进上面的 "screencap"
+    // (那两套枚举名不通用,写错会报 unknown method)
+    "adb_screencap": "default",
+    "adb_input": "maatouch",
+    "address": "127.0.0.1:16384",
+    "adb_path": null,
+    "rotation": 0
+  },
+
+  "input": {
+    // postmessage:后台点击、不抢鼠标、不需要焦点(推荐先试这个)
+    // 若游戏忽略,改 sendinput(抢鼠标)或配合 maafw 用 anchoredtouch
+    "method": "postmessage",
+    "click_delay": 0.03
+  },
+
+  "defaults": {
+    "check_every": 0.05,
+    // 点击位置随机抖动半径(像素),避免永远点在同一像素
+    "click_jitter": 3,
+    // 连续这么多个 tick 什么都没认出来就停下并保存现场截图
+    "max_consecutive_misses": 60
+  },
+
+  "recognizers": {
+    // ---- 关卡入口按钮(主界面/关卡列表上的"开始"类按钮)----------------
+    "start": {
+      "method": "template",
+      "template": "../templates/start.png",
+      "roi": [980, 540, 300, 160],
+      "threshold": 0.85
+    },
+
+    // ---- 战斗中的攻击键 -------------------------------------------------
+    // 右侧武器键。横版动作游戏通常有多个武器键,建议分别抠图。
+    "attack": {
+      "method": "template",
+      "template": "../templates/attack.png",
+      "roi": [1000, 480, 280, 220],
+      "threshold": 0.85
+    },
+
+    // ---- 结算/继续 ------------------------------------------------------
+    "settlement": {
+      "method": "template",
+      "template": "../templates/settlement.png",
+      "roi": [340, 500, 600, 200],
+      "threshold": 0.85
+    },
+
+    // ---- 暂停键(兜底:意外回到暂停界面时退出去)------------------------
+    "pause": {
+      "method": "template",
+      "template": "../templates/pause.png",
+      "roi": [1150, 20, 120, 90],
+      "threshold": 0.88
+    },
+
+    // ---- 血条:不抠图,直接读颜色填充比例 -------------------------------
+    // bands 是 HSV 区间 [h(0-360), s(0-255), v(0-255)]。
+    // 注意:低色相 > 高色相 表示"跨 0/360 环绕",红色必须这样写 ——
+    //   写成 [0,90,90]~[25,255,255] 永远匹配不到红色(hue≈357),这是实测踩过的坑。
+    // 先用 `grab` 抓一张战斗截图,再取色确认你血量条的 HSV 范围。
+    "hpBar": {
+      "method": "bar",
+      "bands": [[[350, 90, 90], [25, 255, 255]]],
+      "roi": [50, 28, 300, 12],
+      "threshold": 0.30
+    }
+  },
+
+  "tasks": {
+    // 优先级从高到低:先处理异常状态,再推进流程,最后才是输出
+    "unpause": {
+      "triggers": [{ "recognizer": "pause", "cooldown": 3.0 }],
+      "actions": [
+        { "action": "click", "target": "pause" },
+        { "action": "wait", "seconds": 0.8 }
+      ]
+    },
+
+    "finishStage": {
+      "triggers": [{ "recognizer": "settlement", "cooldown": 2.0 }],
+      "actions": [
+        { "action": "screenshot", "tag": "settlement" },
+        { "action": "click", "target": "settlement", "jitter": 8 },
+        { "action": "wait", "seconds": 2.0, "jitter": 0.5 }
+      ]
+    },
+
+    "startStage": {
+      "triggers": [{ "recognizer": "start", "cooldown": 1.5 }],
+      "actions": [
+        { "action": "click", "target": "start", "jitter": 6 },
+        { "action": "wait", "seconds": 2.0, "jitter": 0.6 }
+      ]
+    },
+
+    // 主循环:一直在战斗中,就点攻击键。
+    // min_interval 是节流,避免每个 tick 都点(默认 tick 间隔 0.05s)。
+    "fight": {
+      "triggers": [{ "recognizer": "attack", "min_interval": 0.12 }],
+      "actions": [
+        { "action": "click", "target": "attack", "jitter": 5 },
+        {
+          "action": "if",
+          "condition": "fill < 0.30",
+          "then": [{ "action": "log", "message": "血量低于 30%,该加血/换人了" }]
+        }
+      ]
+    }
+  },
+
+  "priority": ["unpause", "finishStage", "startStage", "fight"],
+
+  "loop": { "idle_sleep": 0.03 },
+
+  "session_dir": "sessions",
+
+  // 安全阀:跑够这么久就自己停(秒)
+  "max_seconds": 1800
+}
