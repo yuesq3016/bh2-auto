@@ -5,6 +5,10 @@ sessions/
 releases/
 configs/sessions/
 
+# 游戏截图与模板图：版权归权利人，仓库不放
+templates/
+battle.png
+
 # Python
 __pycache__/
 *.py[cod]

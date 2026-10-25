@@ -3,12 +3,15 @@
 一个**跑在 Windows 上、面向安卓模拟器**的图像识别自动化小工具。设计照着
 **MAA / MaaFramework** 的思路做:任务即数据、识别用模板匹配、循环用轮询而不是状态机。
 
+> 底子来自 **[Choi-Peng/MAAHG2](https://github.com/Choi-Peng/MAAHG2)**(MIT),流程结构沿用了它的做法,
+> 在其之上重写为可独立运行的 Python 实现,并补了自写的 GDI/ADB 后端与自校准工具。鸣谢见文末。
+
 - **零依赖可跑**:只用 `numpy` + 标准库时,截图走自写的 Win32 GDI,模板匹配走自写的 NCC。
 - **装上 `maafw` 更强**:自动改走 MaaFramework 的 Win32 控制器,多出
   `FramePool` / `PrintWindow` 后台截图 —— 这是 GPU 渲染模拟器窗口(`PrintWindow`/`BitBlt` 全黑)**唯一可靠的解法**。
 - **不需要 ADB**,不需要 root,不需要注入。
 
-> 崩坏学园2 的模板图**必须你自己抠**。本仓库不附带任何游戏素材,原因见文末「许可证」。
+> 崩坏学园2 的模板图**必须你自己抠**:仓库里不放 `templates/` 目录,自己截图后用 `simauto match --calibrate` 校准。
 
 > **免责声明**:本项目与米哈游 /《崩坏学园2》官方无关,不含任何游戏素材;用自动化操作游戏可能违反游戏用户协议并导致封号,风险自负,仅供学习与自用。
 
@@ -384,7 +387,8 @@ bug 属于「不报错但结果是错的」,全部是对拍抓出来的:
 
 ## 9. 与 MAA / MaaFramework 的关系与许可证
 
-本项目**参考**了以下两个项目的设计,但**没有复制它们的任何代码**:
+本项目**改编自** [Choi-Peng/MAAHG2](https://github.com/Choi-Peng/MAAHG2)(MIT, Copyright (c) 2024 MaaXYZ),
+并在其基础上重写为 Python 实现。同时参考了以下两个项目的设计:
 
 | 项目 | 许可证 | 本项目如何使用 |
 |---|---|---|
@@ -410,8 +414,24 @@ bug 属于「不报错但结果是错的」,全部是对拍抓出来的:
 本项目代码以 **[MIT](LICENSE)** 协议开源。
 
 - 可以自由使用、修改、分发,包括商用;保留版权声明即可。
-- `templates/` 里的模板图**不是**本项目的授权范围:它们来自使用者的真实截图,游戏画面版权归权利人所有,
-  仓库里不放游戏素材,使用者需自行抠图。
+- **仓库不含** `templates/` 和游戏截图:那些是使用者的自截图,游戏画面版权归权利人所有,需自行准备。
 - 可选的 `maafw` 依赖是 **LGPL-3.0**:以库的方式调用没问题;若要分发打包后的程序,请自行履行 LGPL 义务
   (保留源码可得性与可替换性)。
 - 本项目**与米哈游 /《崩坏学园2》官方无关**,自动化操作可能违反游戏用户协议并导致封号,使用风险自负。
+
+---
+
+## 11. 鸣谢
+
+**作者**:**[yuesq3016](https://github.com/yuesq3016)** —— 本项目的重写、后端与工具链。
+
+站在这些项目肩上:
+
+| 项目 | 作者 | 本项目怎么用它 |
+| --- | --- | --- |
+| **[MAAHG2](https://github.com/Choi-Peng/MAAHG2)** | [Choi-Peng](https://github.com/Choi-Peng) / MaaXYZ | **底子来源**。任务集、流程结构与崩 2 的界面理解都来自它,本项目在其基础上重写为 Python 实现(MIT) |
+| [MaaFramework](https://github.com/MaaXYZ/MaaFramework) | MaaXYZ | 可选依赖,提供 `Win32Controller` 与后台截图 |
+| [MAA](https://github.com/MaaAssistantArknights/MaaAssistantArknights) | MaaAssistantArknights | 设计借鉴:任务即数据、720p 基准、轮询兜底 |
+| MaaCommonAssets | MaaXYZ | OCR 模型(det/rec onnx)来源 |
+
+没有 MAAHG2 就没有这个项目,它把崩 2 的界面和流程摸得很清楚。
