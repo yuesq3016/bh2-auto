@@ -505,8 +505,8 @@ icacls '<项目路径>' /setintegritylevel '(OI)(CI)Low' /T /C
 |---|---|
 | 仓库 | https://github.com/yuesq3016/bh2-auto（PUBLIC） |
 | 描述 | 崩坏学园2自动化挂机脚本 \| Assistant for Houkai Gakuen 2 / Guns Girl Z · Python 实现，基于 MAAHG2 |
-| 最新发布 | `v0.1.1`（此前 `v0.1.0`） |
-| 发布产物 | `simauto-v0.1.0/v0.1.1-win64.zip`、`Simauto-win-x86_64-v0.1.1.zip`、免安装 exe |
+| 最新发布 | `v0.2.0`（此前 `v0.1.1`、`v0.1.0`） |
+| 发布产物 | `simauto-v0.2.0-win64.zip`（42 MB，含 exe、源码、模板、OCR 模型、`README.txt`） |
 | 本地产物 | `dist/`（已 gitignore，不入库） |
 
 **仓库回复监控**：`bash tools/check-replies.sh`（默认查 `yuesq3016/bh2-auto`），
