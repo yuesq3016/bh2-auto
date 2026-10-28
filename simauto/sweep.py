@@ -31,6 +31,22 @@ SUPPORT_BUTTON_Y = 650
 FIGHT_BUTTON = (826, 664)
 SUPPORT_LIST_ROI = (370, 200, 900, 470)
 
+# 「没有自动套」时的挂机方式 —— 取自 MAAHG2 的 FightStart / FightEnd 自定义动作:
+# 开战后两根手指分别按住「向右」和「第一个装备键」,结算出来再松开。
+# 坐标是 1280×720 下的实测值(MAAHG2 的 touch_down(0, 320, 554) / (1, 1000, 630))。
+HOLD_RIGHT = (320, 554)     # 左侧摇杆向右
+HOLD_EQUIP = (1000, 630)    # 右下角第一个装备键
+
+# 是否有「自动套」。True = 当前策略(开战后干等结算);
+# False = 走上面的按住式挂机。界面上的勾选框控制它。
+AUTO_LOADOUT = True
+
+
+def set_auto_loadout(on: bool) -> None:
+    """设置「有自动套」(界面勾选框 / fullrun 参数都走这里)。"""
+    global AUTO_LOADOUT
+    AUTO_LOADOUT = bool(on)
+
 
 def _texts(engine, frame, roi=None):
     hits = engine.recognize(frame, roi)
@@ -302,6 +318,53 @@ def _wait_for_text(inp, engine, needles, timeout_s: float, log, what: str,
         time.sleep(poll_s)
 
 
+def _hold_until_text(inp, engine, log, needles, timeout_s: float, what: str,
+                     poll_s: float = 0.5) -> bool:
+    """按住「向右 + 第一个装备键」直到画面出现结算文字,然后松开。
+
+    没有自动套时角色不会自己走和打,必须一直压着方向和装备键。
+    超时或出异常也会松手 —— 不能把两根手指留在屏幕上,否则后面所有点击都废。
+    """
+    if not hasattr(inp, "touch_down"):
+        log("    (当前输入后端不支持多点按住,退回普通等待)")
+        return _wait_for_text(inp, engine, needles, timeout_s, log, what)
+
+    pressed: list[int] = []
+    try:
+        if inp.touch_down(*HOLD_RIGHT, 0):
+            pressed.append(0)
+        time.sleep(0.2)
+        if inp.touch_down(*HOLD_EQUIP, 1):
+            pressed.append(1)
+        log(f"    没有自动套:按住「向右 + 第一个装备键」等{what}")
+        deadline = time.time() + timeout_s
+        while True:
+            hits = _texts(engine, inp.grab())
+            if any(s >= 0.8 and any(k in t for k in needles) for t, s, _ in hits):
+                return True
+            if time.time() >= deadline:
+                log(f"    ⚠️ 等「{what}」超时({timeout_s:.0f}s)")
+                return False
+            time.sleep(poll_s)
+    finally:
+        for contact in pressed:
+            try:
+                inp.touch_up(contact)
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def battle_wait(inp, engine, log, needles, timeout_s: float, what: str) -> bool:
+    """开战后的等待。
+
+    有自动套 -> 什么都不按,只等结算(当前策略);
+    没有自动套 -> 按住「向右 + 第一个装备键」等结算。
+    """
+    if AUTO_LOADOUT:
+        return _wait_for_text(inp, engine, needles, timeout_s, log, what)
+    return _hold_until_text(inp, engine, log, needles, timeout_s, what)
+
+
 def _fight(inp, engine, log, timeout_s=150):
     frame = inp.grab()
     hits = _texts(engine, frame)
@@ -313,8 +376,9 @@ def _fight(inp, engine, log, timeout_s=150):
     # 先等战斗界面(HP),再等结算 —— 这样能区分"还在加载"和"已经打完"
     _wait_for_text(inp, engine, ("HP", "战斗结算", "再次挑战", "获得奖励"),
                    45, log, "战斗界面出现")
-    ok = _wait_for_text(inp, engine, ("战斗结算", "再次挑战", "获得奖励", "确定"),
-                        timeout_s, log, "战斗结算")
+    ok = battle_wait(inp, engine, log,
+                     ("战斗结算", "再次挑战", "获得奖励", "确定"),
+                     timeout_s, "战斗结算")
     if ok:
         log("    战斗结束,出现结算")
     return ok

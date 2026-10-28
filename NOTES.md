@@ -56,7 +56,7 @@ $py = "C:\Users\14520\AppData\Local\Programs\Python\Python312\python.exe"
 & $py -m simauto resonance                # 共鸣屋只读
 & $py -m simauto resonance --refresh 2    # 刷新 2 次并按名单购买
 & $py -m simauto run --config configs\bh2-summon.json   # 使魔探险:收菜+派出
-& $py tests\test_simauto.py               # 回归测试(64 项)
+& $py tests\test_simauto.py               # 回归测试(71 项)
 ```
 
 Python 模块(可 import 直接用):

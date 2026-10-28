@@ -371,6 +371,28 @@ class AdbBackend:
             return ClickResult(False, "adb", (int(x), int(y)), (int(x), int(y)),
                                self.last_error)
 
+    def touch_down(self, x: int, y: int, contact: int = 0) -> bool:
+        """按下一根手指并保持不放(多点按住用 contact 区分)。
+
+        「没有自动套」时的挂机就靠它:contact=0 按住方向、contact=1 按住第一个
+        装备键,一直按到结算再 ``touch_up``。ADB 输入方法(maatouch)支持多点。
+        """
+        try:
+            self._controller.post_touch_down(int(x), int(y), int(contact)).wait()
+            return True
+        except Exception as exc:  # noqa: BLE001
+            self.last_error = f"adb touch_down failed: {exc}"
+            return False
+
+    def touch_up(self, contact: int = 0) -> bool:
+        """松开某根手指(与 ``touch_down`` 配对)。"""
+        try:
+            self._controller.post_touch_up(int(contact)).wait()
+            return True
+        except Exception as exc:  # noqa: BLE001
+            self.last_error = f"adb touch_up failed: {exc}"
+            return False
+
     def drag(self, x0: int, y0: int, x1: int, y1: int, *, duration: float = 0.3,
              steps: int = 12, button: str = "left") -> Any:
         from .inputs import ClickResult

@@ -56,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-stamina-rounds", type=int, default=30)
     ap.add_argument("--diamond-buys", type=int, default=0,
                     help="清体力时允许「消耗钻石兑换体力」的次数(0 = 不兑换)")
+    ap.add_argument("--no-auto-loadout", action="store_true",
+                    help="没有自动套:进关卡后按住「向右 + 第一个装备键」挂机")
     ap.add_argument("--log", default=None)
     args = ap.parse_args(argv)
 
@@ -72,6 +74,11 @@ def main(argv: list[str] | None = None) -> int:
 
     log(f"===== 全流程开始 {datetime.now():%Y-%m-%d %H:%M:%S} =====")
     log(f"日志文件: {log_path}")
+
+    from .sweep import set_auto_loadout
+    set_auto_loadout(not args.no_auto_loadout)
+    log("自动套:" + ("有(开战后只等结算)"
+                     if not args.no_auto_loadout else "没有(按住「向右 + 第一个装备键」挂机)"))
 
     cap = AdbBackend()
     engine = OcrEngine.shared()

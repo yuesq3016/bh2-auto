@@ -312,6 +312,14 @@ class BotGui(tk.Tk):
                         variable=self.opt_skip).grid(row=4, column=0, columnspan=3,
                                                      sticky="w", pady=2)
 
+        # 「有没有自动套」决定进关卡后怎么打:
+        #   勾上(默认)= 当前策略,自动套自己会打,脚本只等结算;
+        #   取消     = 按住「向右 + 第一个装备键」一直挂到战斗结束。
+        self.opt_auto = tk.BooleanVar(value=True)
+        ttk.Checkbutton(grid, text="有自动套(取消勾选:进关卡后按住「向右 + 第一个装备键」)",
+                        variable=self.opt_auto).grid(row=5, column=0, columnspan=3,
+                                                     sticky="w", pady=2)
+
         tip = ttk.Label(right, style="Hint.TLabel", wraplength=620, justify="left",
                         text=("任务按上面列出的顺序执行(与勾选顺序无关)。"
                               "每项开始前都会先回到主界面,避免停在深层界面里找不到目标。"))
@@ -665,6 +673,13 @@ class BotGui(tk.Tk):
         dry = bool(self.opt_dry.get())
         if dry:
             log("!! 演练模式:只识别,不点击")
+
+        # 有没有自动套决定进关卡后怎么打(见 sweep.battle_wait)
+        from .sweep import set_auto_loadout
+        auto_loadout = bool(self.opt_auto.get())
+        set_auto_loadout(auto_loadout)
+        log("自动套:" + ("有(开战后只等结算)"
+                         if auto_loadout else "没有(按住「向右 + 第一个装备键」挂机)"))
 
         try:
             for key in todo:

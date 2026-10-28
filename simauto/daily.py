@@ -2293,6 +2293,8 @@ def run_world_boss(inp, engine, log, times: int = 3) -> int:
                 break
 
         # 点确定开始战斗,等结算
+        # ⚠️ 这里是「快捷战斗」,任务本身**不进战斗画面**,所以不能用
+        # battle_wait(按住向右+装备键那套只给真正进关卡的清体力/首通用)。
         click_and_wait(inp, engine, log, ok[2], "确定(开始战斗)",
                        wait_any("战斗结算", "再次挑战", "获得奖励"),
                        timeout_s=180, save_tag="boss_result")

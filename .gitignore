@@ -30,3 +30,6 @@ dist/
 
 # PyInstaller 中间产物
 build/
+
+# 仓库回复检查脚本的本地状态
+.state/

@@ -53,7 +53,7 @@ honkai2-bot/
 ├─ templates/               # 16 张模板图（弹窗关闭键、导航按钮、签到图）
 ├─ vendor/ocr-model/        # det.onnx (4.5MB) / rec.onnx (10.3MB) / keys.txt
 ├─ configs/                 # 5 个流水线配置 json（启动/收菜/共鸣屋/回收/召唤）
-├─ tests/test_simauto.py    # 64 项单元测试
+├─ tests/test_simauto.py    # 71 项单元测试
 ├─ equipment.json           # 装备切换坐标与目标套装
 ├─ watchlist.txt            # 共鸣屋购买名单
 ├─ social-rules.json        # 社交页禁用点击规则
@@ -273,6 +273,21 @@ BONUS 节点首通未领时**同样有水晶图标**，但它属于清体力阶�
 ### 6.10 体力/次数不足 = 跳过当前任务，不是失败
 抛 `Insufficient` 异常，上层记为「跳过」。
 
+### 6.11 「有自动套」开关：两种打法
+界面「运行选项」里有个 **有自动套** 勾选框（默认勾上）：
+
+- **勾上（有自动套）**：自动套自己会走位和攻击，脚本开战后只等结算（原来的策略）。
+- **取消（没有自动套）**：照搬 MAAHG2 的 `FightStart`/`FightEnd` 自定义动作 ——
+  进关卡后两根手指分别按住 **向右 (320,554)** 和 **第一个装备键 (1000,630)**，
+  一直压到出现「战斗结算 / 再次挑战 / 获得奖励」，再松开（`sweep.battle_wait`）。
+
+实现要点：多点按住走 ADB 的 `touch_down/touch_up`（contact 0/1，需要 maatouch 输入法）；
+不管成功超时还是异常，`finally` 里都会松手 —— 手指留在屏幕上会让后面所有点击失效。
+
+**只作用于真正进战斗画面的关卡**（清体力 BONUS、首通清理）。虚轴之庭、使魔的爱
+走的是「快捷战斗」，任务不进战斗画面，所以保持原样、不受这个开关影响。
+命令行等价开关：`python -m simauto.fullrun --no-auto-loadout`。
+
 ---
 
 ## 7. 已修复的坑（按症状索引）
@@ -378,7 +393,7 @@ for t, s, loc in sorted(_texts(e, f), key=lambda h:(h[2][1], h[2][0])):
 ```powershell
 # 编译 + 测试
 python -c "import py_compile,glob; [py_compile.compile(x,doraise=True) for x in glob.glob('simauto/*.py')]"
-python tests\test_simauto.py          # 应输出 all 64 checks passed
+python tests\test_simauto.py          # 应输出 all 71 checks passed
 
 # 跑单个任务
 python -m simauto.fullrun --only 商店 --log sessions\run-shop.log
@@ -425,7 +440,7 @@ MaaFramework ProjectInterface 变体，11 个 pipeline JSON / 81 个节点。
    python -c "import py_compile,glob; [py_compile.compile(x,doraise=True) for x in glob.glob('simauto/*.py')]; print('OK')"
    python tests\test_simauto.py
    ```
-   预期：18 模块编译 OK + `all 64 checks passed`
+   预期：18 模块编译 OK + `all 71 checks passed`
 3. 连接模拟器：
    ```powershell
    & "D:\MuMuPlayer\nx_device\12.0\shell\adb.exe" connect 127.0.0.1:16384
@@ -455,7 +470,7 @@ MaaFramework ProjectInterface 变体，11 个 pipeline JSON / 81 个节点。
 |---|---|
 | 新位置 | `E:\DSH-Workspace\honkai2-bot`（代码 / 发布包 / 文档齐全） |
 | 模块编译 | 18 个模块全部 OK |
-| 单元测试 | `all 64 checks passed` |
+| 单元测试 | `all 71 checks passed` |
 | 启动冒烟 | 从新目录启动 GUI 正常（窗口正常出现，测试后已关闭） |
 | 发布包 | `releases\v1.0.0-20261023\` 62 个文件；同名 zip 校验通过（可完整解压） |
 | 启动器 | `启动.cmd` 改为自动查找 Python（PATH → 常见安装位置） |

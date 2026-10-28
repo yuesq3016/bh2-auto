@@ -519,6 +519,96 @@ def test_launch_when_already_running() -> None:
           ab.AdbBackend.start_app(stub, wait=0) is True)
 
 
+def test_no_auto_loadout_holds_keys() -> None:
+    """「没有自动套」= 按住向右 + 第一个装备键,直到结算;有自动套 = 一下都不碰。"""
+    print("battle wait: auto loadout vs hold-right+equip")
+    from simauto import adb_backend as ab
+    from simauto import sweep
+
+    real_sleep = sweep.time.sleep
+    sweep.time.sleep = lambda *_: None
+    try:
+        class Hit:
+            def __init__(self, text):
+                self.text, self.score, self.loc = text, 0.99, (640, 360)
+
+        class Eng:
+            def __init__(self):
+                self.calls = 0
+
+            def recognize(self, frame, roi=None):
+                self.calls += 1
+                return [Hit("战斗结算" if self.calls >= 2 else "HP")]
+
+        class Inp:
+            def __init__(self):
+                self.downs: list[tuple] = []
+                self.ups: list[int] = []
+                self.grabs = 0
+
+            def touch_down(self, x, y, contact=0):
+                self.downs.append((x, y, contact))
+                return True
+
+            def touch_up(self, contact=0):
+                self.ups.append(contact)
+                return True
+
+            def grab(self):
+                self.grabs += 1
+                return None
+
+        sweep.set_auto_loadout(False)
+        inp, eng = Inp(), Eng()
+        ok = sweep.battle_wait(inp, eng, lambda *_: None, ("战斗结算",), 5, "战斗结算")
+        check("no auto set -> waits until the battle ends", ok)
+        check("no auto set -> holds right then the first equipment key",
+              inp.downs[:2] == [sweep.HOLD_RIGHT + (0,), sweep.HOLD_EQUIP + (1,)],
+              str(inp.downs))
+        check("no auto set -> releases both fingers afterwards",
+              sorted(inp.ups) == [0, 1], str(inp.ups))
+
+        sweep.set_auto_loadout(True)
+        inp2, eng2 = Inp(), Eng()
+        ok2 = sweep.battle_wait(inp2, eng2, lambda *_: None, ("战斗结算",), 5, "战斗结算")
+        check("auto set -> still waits for the settlement", ok2)
+        check("auto set -> never touches the screen",
+              not inp2.downs and not inp2.ups, str(inp2.downs))
+    finally:
+        sweep.time.sleep = real_sleep
+        sweep.set_auto_loadout(True)
+
+    # The backend primitive behind the hold.
+    class Job:
+        def wait(self):
+            return self
+
+    class Ctl:
+        def __init__(self):
+            self.calls = []
+
+        def post_touch_down(self, x, y, contact):
+            self.calls.append(("down", x, y, contact))
+            return Job()
+
+        def post_touch_up(self, contact):
+            self.calls.append(("up", contact))
+            return Job()
+
+    ctl = Ctl()
+    stub = object.__new__(ab.AdbBackend)
+    stub._controller = ctl
+    stub.last_error = None
+    ok = (ab.AdbBackend.touch_down(stub, 320, 554, 0)
+          and ab.AdbBackend.touch_down(stub, 1000, 630, 1)
+          and ab.AdbBackend.touch_up(stub, 0)
+          and ab.AdbBackend.touch_up(stub, 1))
+    check("AdbBackend holds two contacts and releases both", ok)
+    check("AdbBackend forwards the exact multi-touch sequence",
+          ctl.calls == [("down", 320, 554, 0), ("down", 1000, 630, 1),
+                        ("up", 0), ("up", 1)], str(ctl.calls))
+
+
 def main() -> int:
     tmp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp")
     os.makedirs(tmp_dir, exist_ok=True)
@@ -534,6 +624,7 @@ def main() -> int:
     test_engine_end_to_end(tmp_dir)
     test_capture_perf()
     test_launch_when_already_running()
+    test_no_auto_loadout_holds_keys()
 
     print()
     if FAILED:
