@@ -481,3 +481,22 @@ icacls '<项目路径>' /setintegritylevel '(OI)(CI)Low' /T /C
 ```
 权限修改前的备份与回滚命令在 `C:\Users\14520\.dsh\acl-reports\`。
 以后再把外部目录搬进这个工作区，先做这三步，否则沙箱里的工具一律写不进去。
+
+---
+
+## 15. GitHub 仓库与发布（2026-10-28 迁回）
+
+| 项 | 值 |
+|---|---|
+| 仓库 | https://github.com/yuesq3016/bh2-auto（PUBLIC） |
+| 描述 | 崩坏学园2自动化挂机脚本 \| Assistant for Houkai Gakuen 2 / Guns Girl Z · Python 实现，基于 MAAHG2 |
+| 最新发布 | `v0.1.1`（此前 `v0.1.0`） |
+| 发布产物 | `simauto-v0.1.0/v0.1.1-win64.zip`、`Simauto-win-x86_64-v0.1.1.zip`、免安装 exe |
+| 本地产物 | `dist/`（已 gitignore，不入库） |
+
+**仓库回复监控**：`bash tools/check-replies.sh`（默认查 `yuesq3016/bh2-auto`），
+只报上次检查之后的新 issue / PR / 评论，时间戳存在 `.state/replies.json`（不入库）。
+会话里挂了每天 **10:00 / 21:00** 两条提醒跑这个脚本。
+
+发布时本机走 `HTTPS_PROXY=http://127.0.0.1:7897`，直连不稳；只读查询直连可以。
+
